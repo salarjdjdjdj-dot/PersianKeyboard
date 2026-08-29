@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="keyboard_bg">#1C1C1E</color>
-    <color name="key_text_color">#F2F2F2</color>
+    <color name="keyboard_bg">#E4E5E7</color>
+    <color name="key_text_color">#1F1F1F</color>
     <color name="key_pressed_text">#000000</color>
 </resources>
