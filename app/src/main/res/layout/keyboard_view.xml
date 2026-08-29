@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.inputmethodservice.KeyboardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/keyboard_view"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_alignParentBottom="true"
-    android:background="@color/keyboard_bg"
-    android:keyBackground="@drawable/key_background"
-    android:keyTextColor="@color/key_text_color"
-    android:keyTextSize="20sp"
-    android:labelTextSize="14sp"
-    android:popupKeyboard="@xml/popup_template"
-    android:shadowRadius="0"
-    android:keyPreviewLayout="@null" />
+    android:orientation="vertical"
+    android:background="@color/keyboard_bg">
+
+    <TextView
+        android:id="@+id/counter_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:text=""
+        android:textColor="@color/key_text_color"
+        android:textSize="12sp"
+        android:gravity="end" />
+
+    <android.inputmethodservice.KeyboardView
+        android:id="@+id/keyboard_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:keyBackground="@drawable/key_background"
+        android:keyTextColor="@color/key_text_color"
+        android:keyTextSize="22sp"
+        android:labelTextSize="13sp"
+        android:popupKeyboard="@xml/popup_template"
+        android:shadowRadius="0" />
+
+</LinearLayout>
