@@ -36,8 +36,9 @@
         <key.boo.ard.ali.HighlightOverlayView
             android:id="@+id/highlight_overlay"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="wrap_content" />
 
     </FrameLayout>
 
 </LinearLayout>
+
