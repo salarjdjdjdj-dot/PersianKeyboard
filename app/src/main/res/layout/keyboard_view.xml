@@ -18,15 +18,26 @@
         android:textSize="12sp"
         android:gravity="end" />
 
-    <android.inputmethodservice.KeyboardView
-        android:id="@+id/keyboard_view"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:keyBackground="@drawable/key_background"
-        android:keyTextColor="@color/key_text_color"
-        android:keyTextSize="22sp"
-        android:labelTextSize="13sp"
-        android:popupKeyboard="@xml/popup_template"
-        android:shadowRadius="0" />
+        android:layout_height="wrap_content">
+
+        <key.boo.ard.ali.GKeyboardView
+            android:id="@+id/keyboard_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:keyBackground="@drawable/key_background"
+            android:keyTextColor="@color/key_text_color"
+            android:keyTextSize="22sp"
+            android:labelTextSize="13sp"
+            android:popupKeyboard="@xml/popup_template"
+            android:shadowRadius="0" />
+
+        <key.boo.ard.ali.HighlightOverlayView
+            android:id="@+id/highlight_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </FrameLayout>
 
 </LinearLayout>
