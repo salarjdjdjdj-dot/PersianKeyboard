@@ -38,7 +38,7 @@ class MainActivity : Activity() {
         itemsLabel.text = "متن‌های آماده (هر خط یک آیتم):"
 
         editText = EditText(this)
-        editText.setText(prefs.getString("macro_items", "1\n2\n3\n4\n5\n6\n7\n8\n9\n0"))
+        editText.setText(prefs.getString("macro_items", "۱\n۲\n۳\n۴\n۵\n۶\n۷\n۸\n۹\n۰"))
         editText.setLines(8)
         editText.gravity = Gravity.TOP
 
