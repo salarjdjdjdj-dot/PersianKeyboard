@@ -133,12 +133,22 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
         handler.post(runnable)
     }
 
+    private fun normalizePersianChar(c: Char): Char {
+        return when (c) {
+            'ي' -> 'ی'
+            'ك' -> 'ک'
+            else -> c
+        }
+    }
+
     private fun highlightKeyFor(ch: Char) {
-        val code = ch.code
+        val code = normalizePersianChar(ch).code
         val key = activeKeyboard.keys.firstOrNull { it.codes.isNotEmpty() && it.codes[0] == code }
         if (key != null) {
             highlightOverlay.showAt(key.x, key.y, key.width, key.height)
             handler.postDelayed({ highlightOverlay.hide() }, typingSpeedMs().coerceAtMost(200))
+        } else {
+            highlightOverlay.hide()
         }
     }
 
