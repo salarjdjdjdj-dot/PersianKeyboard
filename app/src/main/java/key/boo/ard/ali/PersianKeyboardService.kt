@@ -3,8 +3,9 @@ package key.boo.ard.ali
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
-import android.inputmethodservice.KeyboardView
 import android.inputmethodservice.KeyboardView.OnKeyboardActionListener
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -13,9 +14,13 @@ import android.widget.TextView
 
 class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
 
-    private lateinit var keyboardView: KeyboardView
+    private lateinit var keyboardView: GKeyboardView
+    private lateinit var highlightOverlay: HighlightOverlayView
     private lateinit var counterText: TextView
-    private lateinit var lettersKeyboard: Keyboard
+    private lateinit var activeKeyboard: Keyboard
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var autoTypingRunnable: Runnable? = null
 
     companion object {
         const val KEYCODE_MACRO_NEXT = -10
@@ -26,12 +31,11 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
     override fun onCreateInputView(): View {
         val root = layoutInflater.inflate(R.layout.keyboard_view, null)
         keyboardView = root.findViewById(R.id.keyboard_view)
+        highlightOverlay = root.findViewById(R.id.highlight_overlay)
         counterText = root.findViewById(R.id.counter_text)
 
-        lettersKeyboard = Keyboard(this, R.xml.keyboard_persian_letters)
-
+        loadKeyboardForCurrentSize()
         keyboardView.isPreviewEnabled = false
-        keyboardView.keyboard = lettersKeyboard
         keyboardView.setOnKeyboardActionListener(this)
 
         updateCounterDisplay()
@@ -40,22 +44,33 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        if (::counterText.isInitialized) updateCounterDisplay()
+        if (::keyboardView.isInitialized) {
+            loadKeyboardForCurrentSize()
+            updateCounterDisplay()
+        }
+    }
+
+    private fun loadKeyboardForCurrentSize() {
+        val size = prefs().getString("keyboard_size", "MEDIUM")
+        val resId = when (size) {
+            "SMALL" -> R.xml.keyboard_persian_letters_small
+            "LARGE" -> R.xml.keyboard_persian_letters_large
+            else -> R.xml.keyboard_persian_letters_medium
+        }
+        activeKeyboard = Keyboard(this, resId)
+        keyboardView.keyboard = activeKeyboard
     }
 
     override fun onKey(primaryCode: Int, keyCodes: IntArray?) {
         val ic: InputConnection = currentInputConnection ?: return
-
         when (primaryCode) {
             Keyboard.KEYCODE_DELETE -> ic.deleteSurroundingText(1, 0)
             Keyboard.KEYCODE_DONE -> sendEnter(ic)
-            KEYCODE_MACRO_NEXT -> runAutoStep(ic)
+            KEYCODE_MACRO_NEXT -> startAutoTyping(ic)
             KEYCODE_MACRO_RESET -> resetMacro()
             KEYCODE_MACRO_SETTINGS -> openMacroSettings()
             else -> ic.commitText(primaryCode.toChar().toString(), 1)
         }
-
-        updateCounterDisplay()
     }
 
     private fun prefs() = getSharedPreferences("macro_prefs", MODE_PRIVATE)
@@ -66,44 +81,63 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
     }
 
     private fun isCharMode(): Boolean = prefs().getString("auto_mode", "FULL") == "CHAR"
+    private fun typingSpeedMs(): Long = prefs().getInt("auto_speed_ms", 45).toLong().coerceAtLeast(10)
 
-    private fun runAutoStep(ic: InputConnection) {
+    private fun startAutoTyping(ic: InputConnection) {
         val items = getItems()
-        if (items.isEmpty()) return
+        if (items.isEmpty() || autoTypingRunnable != null) return
 
         val p = prefs()
         val lineIndex = p.getInt("macro_line_index", 0) % items.size
         val currentItem = items[lineIndex]
 
-        if (isCharMode()) {
-            val charIndex = p.getInt("macro_char_index", 0)
-            if (charIndex < currentItem.length) {
-                ic.commitText(currentItem[charIndex].toString(), 1)
-                p.edit().putInt("macro_char_index", charIndex + 1).apply()
-            }
-            if (charIndex + 1 >= currentItem.length) {
-                sendEnter(ic)
-                p.edit()
-                    .putInt("macro_char_index", 0)
-                    .putInt("macro_line_index", lineIndex + 1)
-                    .apply()
-            }
-        } else {
+        if (!isCharMode()) {
             ic.commitText(currentItem, 1)
             sendEnter(ic)
             p.edit().putInt("macro_line_index", lineIndex + 1).apply()
+            updateCounterDisplay()
+            return
+        }
+
+        var charIndex = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                if (charIndex < currentItem.length) {
+                    val ch = currentItem[charIndex]
+                    ic.commitText(ch.toString(), 1)
+                    highlightKeyFor(ch)
+                    charIndex++
+                    handler.postDelayed(this, typingSpeedMs())
+                } else {
+                    sendEnter(ic)
+                    p.edit().putInt("macro_line_index", lineIndex + 1).apply()
+                    updateCounterDisplay()
+                    autoTypingRunnable = null
+                }
+            }
+        }
+        autoTypingRunnable = runnable
+        handler.post(runnable)
+    }
+
+    private fun highlightKeyFor(ch: Char) {
+        val code = ch.code
+        val key = activeKeyboard.keys.firstOrNull { it.codes.isNotEmpty() && it.codes[0] == code }
+        if (key != null) {
+            highlightOverlay.showAt(key.x, key.y, key.width, key.height)
+            handler.postDelayed({ highlightOverlay.hide() }, typingSpeedMs().coerceAtMost(200))
         }
     }
 
     private fun resetMacro() {
-        prefs().edit()
-            .putInt("macro_line_index", 0)
-            .putInt("macro_char_index", 0)
-            .apply()
+        autoTypingRunnable?.let { handler.removeCallbacks(it) }
+        autoTypingRunnable = null
+        prefs().edit().putInt("macro_line_index", 0).apply()
+        updateCounterDisplay()
     }
 
     private fun openMacroSettings() {
-        val intent = Intent(this, MacroSettingsActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
@@ -119,15 +153,8 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
             counterText.text = ""
             return
         }
-        val p = prefs()
-        val lineIndex = p.getInt("macro_line_index", 0) % items.size
-        val total = items.size
-        counterText.text = if (isCharMode()) {
-            val charIndex = p.getInt("macro_char_index", 0)
-            "پیشرفت: ${lineIndex + 1}/$total · حرف $charIndex/${items[lineIndex].length}"
-        } else {
-            "پیشرفت: ${lineIndex + 1}/$total"
-        }
+        val lineIndex = prefs().getInt("macro_line_index", 0) % items.size
+        counterText.text = "پیشرفت: ${lineIndex + 1}/${items.size}"
     }
 
     override fun onPress(primaryCode: Int) {}
