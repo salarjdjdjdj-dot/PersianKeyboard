@@ -1,11 +1,11 @@
-android:horizontalGap="0px"
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:horizontalGap="0px"
     android:verticalGap="0px"
     android:keyWidth="10%p"
-    android:keyHeight="68dp"
-    android:horizontalGap="3dp"
-    android:verticalGap="10dp">
+    android:keyHeight="44dp">
 
-    <Row android:keyHeight="50dp">
+    <Row android:keyHeight="34dp">
         <Key android:codes="1777" android:keyLabel="۱"/>
         <Key android:codes="1778" android:keyLabel="۲"/>
         <Key android:codes="1779" android:keyLabel="۳"/>
@@ -86,3 +86,4 @@ android:horizontalGap="0px"
     </Row>
 
 </Keyboard>
+
