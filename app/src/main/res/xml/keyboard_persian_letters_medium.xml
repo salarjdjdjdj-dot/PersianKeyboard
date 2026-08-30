@@ -1,9 +1,9 @@
-android:horizontalGap="0px"
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:horizontalGap="0px"
     android:verticalGap="0px"
     android:keyWidth="10%p"
-    android:keyHeight="56dp"
-    android:horizontalGap="3dp"
-    android:verticalGap="8dp">
+    android:keyHeight="56dp">
 
     <Row android:keyHeight="42dp">
         <Key android:codes="1777" android:keyLabel="۱"/>
