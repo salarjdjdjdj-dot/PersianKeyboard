@@ -34,19 +34,24 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
         highlightOverlay = root.findViewById(R.id.highlight_overlay)
         counterText = root.findViewById(R.id.counter_text)
 
-        loadKeyboardForCurrentSize()
         keyboardView.isPreviewEnabled = false
         keyboardView.setOnKeyboardActionListener(this)
 
-        updateCounterDisplay()
+        keyboardView.post {
+            loadKeyboardForCurrentSize()
+            updateCounterDisplay()
+        }
+
         return root
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         if (::keyboardView.isInitialized) {
-            loadKeyboardForCurrentSize()
-            updateCounterDisplay()
+            keyboardView.post {
+                loadKeyboardForCurrentSize()
+                updateCounterDisplay()
+            }
         }
     }
 
@@ -57,8 +62,16 @@ class PersianKeyboardService : InputMethodService(), OnKeyboardActionListener {
             "LARGE" -> R.xml.keyboard_persian_letters_large
             else -> R.xml.keyboard_persian_letters_medium
         }
-        activeKeyboard = Keyboard(this, resId)
+
+        val realWidth = keyboardView.width
+        val realHeight = keyboardView.height
+        val displayWidth = if (realWidth > 0) realWidth else resources.displayMetrics.widthPixels
+        val displayHeight = if (realHeight > 0) realHeight else resources.displayMetrics.heightPixels
+
+        activeKeyboard = Keyboard(this, resId, 0, displayWidth, displayHeight)
         keyboardView.keyboard = activeKeyboard
+        keyboardView.requestLayout()
+        keyboardView.invalidate()
     }
 
     override fun onKey(primaryCode: Int, keyCodes: IntArray?) {
